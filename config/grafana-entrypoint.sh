@@ -69,6 +69,9 @@ configure_grafana() {
   install_dashboards
 }
 
+mkdir -p /etc/grafana/dashboards && \
+  mkdir -p /etc/grafana/datasources
+
 echo "Running configure_grafana in the background..."
 configure_grafana &
 /run.sh
