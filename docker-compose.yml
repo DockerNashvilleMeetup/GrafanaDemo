@@ -71,13 +71,17 @@ services:
     image: registry.hub.docker.com/grafana/grafana:4.6.0
     configs:
     - source: grafana-dashboard-nodes
-      target: /etc/grafana/dashboards/dashboards-nodes.json
+      target: /etc/grafana/dashboards/nodes.json
+      mode: 0644
     - source: grafana-dashboard-services
-      target: /etc/grafana/dashboards/dashboards-services.json
+      target: /etc/grafana/dashboards/services.json
+      mode: 0644
     - source: grafana-dashboard-prometheus
-      target: /etc/grafana/dashboards/dashboards-prometheus.json
+      target: /etc/grafana/dashboards/prometheus.json
+      mode: 0644
     - source: grafana-datasource-prometheus
       target: /etc/grafana/datasources/prometheus.json
+      mode: 0644
     - source: grafana-entrypoint
       target: /entrypoint.sh
       mode: 0755
