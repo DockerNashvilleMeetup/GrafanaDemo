@@ -4,8 +4,8 @@
 # https://github.com/grafana/grafana-docker/issues/74
 
 GRAFANA_URL=http://${GF_SECURITY_ADMIN_USER}:${GF_SECURITY_ADMIN_PASSWORD}@${GF_SERVER_HTTP_ADDR:-localhost}:${GF_SERVER_HTTP_PORT:-3000}
-DATASOURCES_PATH=${DATASOURCES_PATH:-/etc/grafana/datasources}
-DASHBOARDS_PATH=${DASHBOARDS_PATH:-/etc/grafana/dashboards}
+DATASOURCES_PATH=${DATASOURCES_PATH:-/opt/grafana/datasources}
+DASHBOARDS_PATH=${DASHBOARDS_PATH:-/opt/grafana/dashboards}
 
 # Generic function to call the Vault API
 grafana_api() {
@@ -69,8 +69,8 @@ configure_grafana() {
   install_dashboards
 }
 
-mkdir -p /etc/grafana/dashboards && \
-  mkdir -p /etc/grafana/datasources
+mkdir -p /opt/grafana/dashboards && \
+  mkdir -p /opt/grafana/datasources
 
 echo "Running configure_grafana in the background..."
 configure_grafana &
