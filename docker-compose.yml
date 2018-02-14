@@ -5,13 +5,13 @@ configs:
     external: true
   dockerd-exporter-caddyfile:
     external: true
-  grafana-dashboards-nodes:
+  grafana-dashboard-nodes:
     external: true
-  grafana-dashboards-services:
+  grafana-dashboard-services:
     external: true
-  grafana-dashboards-prometheus:
+  grafana-dashboard-prometheus:
     external: true
-  grafana-datasources-prometheus:
+  grafana-datasource-prometheus:
     external: true
   grafana-entrypoint:
     external: true
@@ -25,6 +25,9 @@ configs:
     external: true
   prometheus-task-rules:
     external: true
+
+network:
+  monitoring:
 
 volumes:
   prometheus_data:
