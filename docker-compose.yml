@@ -143,6 +143,7 @@ services:
       target: /etc/prometheus/prometheus.yml
     - source: prometheus-entrypoint
       target: /entrypoint.sh
+      mode: 0755
     - source: prometheus-node-rules
       target: /etc/prometheus/swarm_node.rules.yml
     - source: prometheus-task-rules
