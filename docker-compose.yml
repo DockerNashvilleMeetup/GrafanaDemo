@@ -1,0 +1,191 @@
+version: "3.4"
+
+configs:
+  alertmanager-config:
+    external: true
+  dockerd-exporter-caddyfile:
+    external: true
+  grafana-dashboards-nodes:
+    external: true
+  grafana-dashboards-services:
+    external: true
+  grafana-dashboards-prometheus:
+    external: true
+  grafana-datasources-prometheus:
+    external: true
+  grafana-entrypoint:
+    external: true
+  node-exporter-entrypoint:
+    external: true
+  prometheus-config:
+    external: true
+  prometheus-entrypoint:
+    external: true
+  prometheus-node-rules:
+    external: true
+  prometheus-task-rules:
+    external: true
+
+volumes:
+  prometheus_data:
+
+services:
+  alertmanager:
+    image: registry.hub.docker.com/prom/alertmanager:v0.9.1
+    configs:
+    - source: alertmanager-config
+      target: /etc/alertmanager/alertmanager.yml
+    networks:
+    - monitoring
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == worker
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+  dockerd-exporter:
+    image: registry.hub.docker.com/stefanprodan/caddy:0.10.10
+    config:
+    - source: dockerd-exporter-caddyfile
+      target: /etc/caddy/Caddyfile
+    networks:
+    - monitoring
+    environment:
+    - DOCKER_GWBRIDGE_IP=172.18.0.1
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+  grafana:
+    image: registry.hub.docker.com/grafana/grafana:4.6.0
+    configs:
+    - source: grafana-dashboard-nodes
+      target: /etc/grafana/dashboards/dashboards-nodes.json
+    - source: grafana-dashboard-services
+      target: /etc/grafana/dashboards/dashboards-services.json
+    - source: grafana-dashboard-prometheus
+      target: /etc/grafana/dashboards/dashboards-prometheus.json
+    - source: grafana-datasource-prometheus
+      target: /etc/grafana/datasources/prometheus.json
+    - source: grafana-entrypoint
+      target: /entrypoint.sh
+      mode: 0755
+    ports:
+    - 3000:3000
+    networks:
+    - monitoring
+    entrypoint: [ "/entrypoint.sh" ]
+    environment:
+    - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+    - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-secret}
+    - GF_USERS_ALLOW_SIGN_UP=false
+    - GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
+    - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@test.com}
+    - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME:-Grafana}
+    - GF_SMTP_HOST=${GF_SMTP_HOST:-smtp:25}
+    - GF_SMTP_USER=${GF_SMTP_USER}
+    - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == worker
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+  node-exporter:
+    image: registry.hub.docker.com/prom/node-exporter:v0.14.0
+    config:
+    - source: node-exporter-entrypoint
+      target: /entrypoint.sh
+      mode: 0755
+    networks:
+    - monitoring
+    entrypoint: [ "/entrypoint.sh" ]
+    environment:
+    - NODE_ID={{.Node.ID}}
+    volumes:
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /:/rootfs:ro
+    - /etc/hostname:/etc/nodename
+    command:
+    - '-collector.textfile.directory=/etc/node-exporter/'
+    - '-collector.procfs=/host/proc'
+    - '-collector.sysfs=/host/sys'
+    - '-collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    - '-collectors.enabled=textfile,conntrack,diskstats,entropy,filefd,filesystem,loadavg,mdadm,meminfo,netdev,netstat,stat,time,vmstat'
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+  prometheus:
+    image: registry.hub.docker.com/prom/prometheus:v1.8.2
+    configs:
+    - source: prometheus-config
+      target: /etc/prometheus/prometheus.yml
+    - source: prometheus-entrypoint
+      target: /entrypoint.sh
+    - source: prometheus-node-rules
+      target: /etc/prometheus/swarm_node.rules.yml
+    - source: prometheus-task-rules
+      target: /etc/prometheus/swarm_task.rules.yml
+    ports:
+    - 9090:9090
+    networks:
+    - monitoring
+    entrypoint: [ "/entrypoint.sh" ]
+    command:
+    - '-config.file=/etc/prometheus/prometheus.yml'
+    - '-storage.local.path=/prometheus'
+    - '-web.console.libraries=/etc/prometheus/console_libraries'
+    - '-web.console.templates=/etc/prometheus/consoles'
+    - '-storage.local.target-heap-size=1073741824'
+    - '-storage.local.retention=24h'
+    - '-alertmanager.url=http://alertmanager:9093'
+    volumes:
+    - prometheus_data:/prometheus
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == worker
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 1024M
+  cadvisor:
+    image: registry.hub.docker.com/google/cadvisor:v0.28.3
+    networks:
+    - monitoring
+    command: -logtostderr -docker_only
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    - /:/rootfs:ro
+    - /var/run:/var/run
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:ro
+    deploy:
+      mode: global
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
