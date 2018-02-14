@@ -26,7 +26,7 @@ configs:
   prometheus-task-rules:
     external: true
 
-network:
+networks:
   monitoring:
 
 volumes:
