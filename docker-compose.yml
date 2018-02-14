@@ -188,4 +188,3 @@ services:
           memory: 128M
         reservations:
           memory: 64M
-
