@@ -50,7 +50,7 @@ services:
           memory: 64M
   dockerd-exporter:
     image: registry.hub.docker.com/stefanprodan/caddy:0.10.10
-    config:
+    configs:
     - source: dockerd-exporter-caddyfile
       target: /etc/caddy/Caddyfile
     networks:
@@ -106,7 +106,7 @@ services:
           memory: 64M
   node-exporter:
     image: registry.hub.docker.com/prom/node-exporter:v0.14.0
-    config:
+    configs:
     - source: node-exporter-entrypoint
       target: /entrypoint.sh
       mode: 0755
