@@ -149,9 +149,9 @@ services:
       target: /entrypoint.sh
       mode: 0755
     - source: prometheus-node-rules
-      target: /etc/prometheus/swarm_node.rules.yml
+      target: /etc/prometheus/rules/swarm_node.rules.yml
     - source: prometheus-task-rules
-      target: /etc/prometheus/swarm_task.rules.yml
+      target: /etc/prometheus/rules/swarm_task.rules.yml
     ports:
     - 9090:9090
     networks:
