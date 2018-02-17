@@ -14,6 +14,7 @@ fi
 sh -c "${BASE_DIR}/deploy-config.sh"
 sh -c "${BASE_DIR}/deploy-secret.sh"
 docker network create -d overlay --attachable monitoring >/dev/null 2>&1 || true
+docker network create -d overlay --attachable func_functions >/dev/null 2>&1 || true
 docker stack deploy --compose-file monitoring.yml monitoring
 docker stack deploy --compose-file atsea.yml atsea
 docker stack deploy --compose-file openfaas.yml openfaas
