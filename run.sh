@@ -19,6 +19,10 @@ docker stack deploy --compose-file atsea.yml atsea
 docker stack deploy --compose-file openfaas.yml openfaas
 
 cat << EOF
+------------==============------------
+      Docker Nashville Community
+------------==============------------
+
                   ##          .
             ## ## ##         ==
          ## ## ## ##        ===
@@ -27,6 +31,8 @@ cat << EOF
      \______ o          __/
        \    \        __/
         \____\______/
+
+------------==============------------
 EOF
 echo ""
 echo "portainer:     http://localhost:9000"
