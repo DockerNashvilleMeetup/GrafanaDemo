@@ -11,16 +11,16 @@ if [ -z "${BASE_DIR}" ]; then
     export BASE_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 fi
 
-for file in ${BASE_DIR}/config/*; do
+for file in ${BASE_DIR}/secret/*; do
     echo "processing: ${file}"
     if [ -f ${file} ]; then
         fileName=${file##*/}
         baseName=${fileName%.*}
 
-        if [ ! -z $(docker config ls -q --filter name=${baseName} > /dev/null 2>&1) ]; then
-            docker config rm ${baseName} 2>&1 || true
+        if [ ! -z $(docker secret ls -q --filter name=${baseName} > /dev/null 2>&1) ]; then
+            docker secret rm ${baseName} 2>&1 || true
         fi
 
-        docker config create $baseName $file > /dev/null 2>&1 || true
+        docker secret create $baseName $file > /dev/null 2>&1 || true
     fi;
 done

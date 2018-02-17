@@ -9,6 +9,8 @@ configs:
     external: true
   grafana-dashboard-services:
     external: true
+  grafana-dashboard-openfaas:
+    external: true
   grafana-dashboard-prometheus:
     external: true
   grafana-datasource-prometheus:
@@ -21,18 +23,21 @@ configs:
     external: true
   prometheus-entrypoint:
     external: true
-  prometheus-node-rules:
-    external: true
-  prometheus-task-rules:
+  prometheus-alert-rules:
     external: true
 
 networks:
   monitoring:
-
-volumes:
-  prometheus_data:
+    external: true
 
 services:
+  portainer:
+    image: portainer/portainer
+    command: [ "--no-auth" ]
+    ports:
+    - 9000:9000
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
   alertmanager:
     image: registry.hub.docker.com/prom/alertmanager:v0.9.1
     configs:
@@ -43,9 +48,6 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-      placement:
-        constraints:
-        - node.role == worker
       resources:
         limits:
           memory: 128M
@@ -79,6 +81,9 @@ services:
     - source: grafana-dashboard-prometheus
       target: /opt/grafana/dashboards/prometheus.json
       mode: 0644
+    - source: grafana-dashboard-openfaas
+      target: /opt/grafana/dashboards/openfaas.json
+      mode: 0644      
     - source: grafana-datasource-prometheus
       target: /opt/grafana/datasources/prometheus.json
       mode: 0644
@@ -94,18 +99,10 @@ services:
     - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
     - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-secret}
     - GF_USERS_ALLOW_SIGN_UP=false
-    - GF_SMTP_ENABLED=${GF_SMTP_ENABLED:-false}
-    - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS:-grafana@test.com}
-    - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME:-Grafana}
-    - GF_SMTP_HOST=${GF_SMTP_HOST:-smtp:25}
-    - GF_SMTP_USER=${GF_SMTP_USER}
-    - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+    - GF_AUTH_ANONYMOUS_ENABLED=true
     deploy:
       mode: replicated
       replicas: 1
-      placement:
-        constraints:
-        - node.role == worker
       resources:
         limits:
           memory: 128M
@@ -141,38 +138,27 @@ services:
         reservations:
           memory: 64M
   prometheus:
-    image: registry.hub.docker.com/prom/prometheus:v1.8.2
+    image: registry.hub.docker.com/prom/prometheus:v2.0.0
     configs:
     - source: prometheus-config
       target: /etc/prometheus/prometheus.yml
     - source: prometheus-entrypoint
       target: /entrypoint.sh
       mode: 0755
-    - source: prometheus-node-rules
-      target: /etc/prometheus/rules/swarm_node.rules.yml
-    - source: prometheus-task-rules
-      target: /etc/prometheus/rules/swarm_task.rules.yml
+    - source: prometheus-alert-rules
+      target: /etc/prometheus/rules/alert.rules.yml
     ports:
     - 9090:9090
     networks:
     - monitoring
     entrypoint: [ "/entrypoint.sh" ]
     command:
-    - '-config.file=/etc/prometheus/prometheus.yml'
-    - '-storage.local.path=/prometheus'
-    - '-web.console.libraries=/etc/prometheus/console_libraries'
-    - '-web.console.templates=/etc/prometheus/consoles'
-    - '-storage.local.target-heap-size=1073741824'
-    - '-storage.local.retention=24h'
-    - '-alertmanager.url=http://alertmanager:9093'
-    volumes:
-    - prometheus_data:/prometheus
+    - '--config.file=/etc/prometheus/prometheus.yml'
+    - '--web.console.libraries=/etc/prometheus/console_libraries'
+    - '--web.console.templates=/etc/prometheus/consoles'
     deploy:
       mode: replicated
       replicas: 1
-      placement:
-        constraints:
-        - node.role == worker
       resources:
         limits:
           memory: 2048M
